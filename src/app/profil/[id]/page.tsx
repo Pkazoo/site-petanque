@@ -8,7 +8,7 @@ import {
     MapPin,
     Calendar,
     Trophy,
-    Target,
+    BarChart3,
     MessageCircle,
     QrCode,
     Award,
@@ -286,7 +286,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Target className="h-5 w-5 text-primary" />
+                            <BarChart3 className="h-5 w-5 text-primary" />
                             Statistiques
                         </CardTitle>
                     </CardHeader>

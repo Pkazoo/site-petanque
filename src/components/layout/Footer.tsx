@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Target } from "lucide-react";
 
 const footerLinks = {
     plateforme: [
@@ -28,8 +27,8 @@ export function Footer() {
                     {/* Brand */}
                     <div className="col-span-2 md:col-span-1">
                         <Link href="/" className="flex items-center gap-2 mb-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                                <Target className="h-6 w-6" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden">
+                                <img src="/logo-fanny.png" alt="Pétanque Manager" className="h-10 w-10 object-cover" />
                             </div>
                             <span className="text-xl font-bold text-foreground">
                                 Pétanque<span className="text-primary">Manager</span>

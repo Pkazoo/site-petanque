@@ -5,10 +5,9 @@ import { usePathname } from "next/navigation";
 import {
     Trophy,
     BarChart3,
-    MessageCircle,
+    Home,
     Menu,
     X,
-    Target,
     Shield,
     LogIn,
     LogOut,
@@ -37,10 +36,10 @@ const roleConfig: Record<string, { label: string; icon: typeof Crown; className:
 };
 
 const navigation = [
+    { name: "Accueil", href: "/", icon: Home },
     { name: "Tournois", href: "/tournois", icon: Trophy },
     { name: "Joueurs", href: "/admin", icon: Users, adminOnly: true },
     { name: "Classement", href: "/classement", icon: BarChart3 },
-    { name: "Messages", href: "/messages", icon: MessageCircle },
 ];
 
 export function Header() {
@@ -97,8 +96,8 @@ export function Header() {
                 {/* Logo + QR Code */}
                 <div className="flex items-center gap-3">
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md group-hover:shadow-lg transition-shadow">
-                            <Target className="h-6 w-6" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow">
+                            <img src="/logo-fanny.png" alt="Pétanque Manager" className="h-10 w-10 object-cover" />
                         </div>
                         <span className="hidden sm:block text-xl font-bold text-foreground">
                             Pétanque<span className="text-primary">Manager</span>
@@ -121,7 +120,7 @@ export function Header() {
                         // Skip if item is adminOnly and current user is not admin
                         if (item.adminOnly && !isAdmin) return null;
 
-                        const isActive = pathname.startsWith(item.href);
+                        const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
                         return (
                             <Link
                                 key={item.name}
@@ -343,7 +342,7 @@ export function Header() {
                         // Skip if item is adminOnly and current user is not admin
                         if (item.adminOnly && !isAdmin) return null;
 
-                        const isActive = pathname.startsWith(item.href);
+                        const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
                         return (
                             <Link
                                 key={item.name}

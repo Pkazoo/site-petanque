@@ -367,7 +367,7 @@ export default function TournoisPage() {
                     {filteredTournaments.length === 0 && (
                         <Card className="py-16 text-center">
                             <CardContent>
-                                <div className="text-6xl mb-4">🎯</div>
+                                <img src="/logo-fanny.png" alt="Fanny" className="h-16 w-16 mx-auto mb-4 rounded-lg object-cover" />
                                 <h3 className="text-xl font-semibold text-foreground mb-2">
                                     {isOrganisateur && !isAdmin
                                         ? "Vous n'avez pas encore de tournoi"

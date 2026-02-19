@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Target, Mail, Lock, MapPin, ArrowRight, Loader2, AlertCircle, CheckCircle, Camera, User, Bell } from "lucide-react";
+import { Mail, Lock, MapPin, ArrowRight, Loader2, AlertCircle, CheckCircle, Camera, User, Bell } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -148,8 +148,8 @@ export default function InscriptionPage() {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-flex items-center gap-2">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-                            <Target className="h-7 w-7" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl overflow-hidden shadow-lg">
+                            <img src="/logo-fanny.png" alt="Pétanque Manager" className="h-12 w-12 object-cover" />
                         </div>
                         <span className="text-2xl font-bold text-foreground">
                             Pétanque<span className="text-primary">Manager</span>

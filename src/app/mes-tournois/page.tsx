@@ -13,9 +13,8 @@ import {
     Clock,
     CheckCircle,
     AlertCircle,
-    Target,
-    Shuffle,
     Swords,
+    Shuffle,
     UserPlus,
     QrCode,
     Search,
@@ -264,7 +263,7 @@ export default function MesTournoisPage() {
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-orange-100 rounded-lg">
-                                <Target className="h-5 w-5 text-orange-600" />
+                                <Swords className="h-5 w-5 text-orange-600" />
                             </div>
                             <div>
                                 <p className="text-2xl font-bold">{ongoingTournaments.length}</p>
@@ -307,7 +306,7 @@ export default function MesTournoisPage() {
                     {ongoingTournaments.length > 0 && (
                         <section>
                             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                                <Target className="h-5 w-5 text-orange-500" />
+                                <Swords className="h-5 w-5 text-orange-500" />
                                 En cours
                             </h2>
                             <div className="grid gap-4">
