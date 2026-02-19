@@ -28,6 +28,7 @@ export default function EditProfilePage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const formInitialized = useRef(false);
 
     const playerProfile = authUser ? getPlayerByUserId(authUser.id) : null;
 
@@ -39,8 +40,10 @@ export default function EditProfilePage() {
         avatar: "",
     });
 
+    // Initialiser le formulaire UNE SEULE FOIS quand le profil est chargé
     useEffect(() => {
-        if (playerProfile) {
+        if (playerProfile && !formInitialized.current) {
+            formInitialized.current = true;
             setFormData({
                 firstName: playerProfile.firstName || "",
                 lastName: playerProfile.lastName || "",
@@ -57,19 +60,60 @@ export default function EditProfilePage() {
         }
     }, [authUser, authLoading, router]);
 
-    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                setError("La photo ne doit pas dépasser 5 Mo");
-                return;
-            }
-
+    const compressImage = (file: File, maxSizeKB: number = 300): Promise<string> => {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setFormData({ ...formData, avatar: reader.result as string });
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDimension = 800;
+                    if (width > maxDimension || height > maxDimension) {
+                        if (width > height) {
+                            height = (height / width) * maxDimension;
+                            width = maxDimension;
+                        } else {
+                            width = (width / height) * maxDimension;
+                            height = maxDimension;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) { reject(new Error('Canvas context error')); return; }
+                    ctx.drawImage(img, 0, 0, width, height);
+                    let quality = 0.9;
+                    let result = canvas.toDataURL('image/jpeg', quality);
+                    while (result.length > maxSizeKB * 1024 * 1.37 && quality > 0.1) {
+                        quality -= 0.1;
+                        result = canvas.toDataURL('image/jpeg', quality);
+                    }
+                    resolve(result);
+                };
+                img.onerror = () => reject(new Error('Failed to load image'));
+                img.src = e.target?.result as string;
             };
+            reader.onerror = () => reject(new Error('Failed to read file'));
             reader.readAsDataURL(file);
+        });
+    };
+
+    const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 10 * 1024 * 1024) {
+            setError("La photo ne doit pas dépasser 10 Mo");
+            return;
+        }
+
+        try {
+            const compressed = await compressImage(file, 300);
+            setFormData(prev => ({ ...prev, avatar: compressed }));
+        } catch {
+            setError("Erreur lors du traitement de la photo");
         }
     };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { PlayerForm } from "@/components/tournois/PlayerForm";
+
 import Link from "next/link";
 import { ArrowLeft, Users, Plus, X, Shuffle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -357,17 +357,14 @@ export default function CreateLeaguePage() {
                                     </div>
                                 </div>
 
-                                <div className="bg-primary/5 border border-primary/20 p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div className="flex items-start gap-2 sm:gap-3">
-                                        <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-primary mt-0.5 shrink-0" />
-                                        <div>
-                                            <p className="text-sm font-medium">Un joueur manque ?</p>
-                                            <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1">
-                                                Créez un nouveau profil de joueur pour l&apos;ajouter.
-                                            </p>
-                                        </div>
+                                <div className="bg-primary/5 border border-primary/20 p-3 sm:p-4 rounded-lg flex items-start gap-2 sm:gap-3">
+                                    <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-primary mt-0.5 shrink-0" />
+                                    <div>
+                                        <p className="text-sm font-medium">Un joueur manque ?</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1">
+                                            Demandez-lui de créer un compte sur la plateforme.
+                                        </p>
                                     </div>
-                                    <PlayerForm onSuccess={() => {}} />
                                 </div>
                             </CardContent>
                         </Card>

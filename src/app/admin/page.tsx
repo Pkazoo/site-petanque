@@ -1,19 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useTournament } from '@/lib/context/TournamentContext';
 import { createClient } from '@/lib/supabase/client';
 import { UserAccount, UserRole, Tournament } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import Link from 'next/link';
-import { Shield, Users, Crown, AlertCircle, Trophy, Trash2, ArrowUp, ArrowDown, MapPin, Calendar, RefreshCcw, CheckCircle2, UserPlus, Link as LinkIcon, ExternalLink, Swords } from 'lucide-react';
+import { Shield, Users, Crown, AlertCircle, Trophy, Trash2, ArrowUp, ArrowDown, MapPin, Calendar, CheckCircle2, UserPlus, ExternalLink, Swords, X, Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { PlayerForm } from '@/components/tournois/PlayerForm';
-import { CreateAccountDialog } from '@/components/tournois/CreateAccountDialog';
-import { User as PlayerType } from '@/types';
 
 const roleLabels: Record<UserRole, string> = {
   joueur: 'Joueur',
@@ -33,23 +30,6 @@ const roleColors: Record<UserRole, string> = {
   user: 'bg-blue-100 text-blue-800',
 };
 
-function AuthStatus({ playerLinked }: { playerLinked: boolean }) {
-  if (playerLinked) {
-    return (
-      <Badge className="bg-green-100 text-green-700 border-none text-[10px] font-bold py-0.5 px-2 flex items-center gap-1">
-        <CheckCircle2 className="h-3 w-3" />
-        Profil lié
-      </Badge>
-    );
-  }
-  return (
-    <Badge className="bg-amber-100 text-amber-700 border-none text-[10px] font-bold py-0.5 px-2 flex items-center gap-1">
-      <AlertCircle className="h-3 w-3" />
-      Profil manquant
-    </Badge>
-  );
-}
-
 export default function AdminPage() {
   const { user, userAccount, isAdmin, loading: authLoading } = useAuth();
   const { tournaments, players, deletePlayer, leagues, leagueMatches, deleteLeague } = useTournament();
@@ -60,10 +40,22 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('utilisateurs');
   const [deletingTournament, setDeletingTournament] = useState<string | null>(null);
   const [sortedTournaments, setSortedTournaments] = useState<Tournament[]>([]);
-  const [syncing, setSyncing] = useState(false);
-  const [createAccountPlayer, setCreateAccountPlayer] = useState<PlayerType | null>(null);
+
+  // Dialog "Ajouter un utilisateur"
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [createForm, setCreateForm] = useState({ email: '', password: '', firstName: '', lastName: '', role: 'joueur' as UserRole });
+  const [creating, setCreating] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const supabase = createClient();
+
+  // Vue unifiée : chaque user_account avec son profil joueur lié
+  const unifiedUsers = useMemo(() => {
+    return users.map(u => {
+      const linkedPlayer = players.find(p => p.userId === u.id);
+      return { ...u, player: linkedPlayer };
+    });
+  }, [users, players]);
 
   // Initialiser les tournois triés
   useEffect(() => {
@@ -79,19 +71,16 @@ export default function AdminPage() {
 
     setDeletingTournament(tournamentId);
 
-    // Supprimer les matches associés
     await supabase
       .from('tournament_matches')
       .delete()
       .eq('tournament_id', tournamentId);
 
-    // Supprimer les équipes associées
     await supabase
       .from('tournament_teams')
       .delete()
       .eq('tournament_id', tournamentId);
 
-    // Supprimer le tournoi
     const { error } = await supabase
       .from('tournaments')
       .delete()
@@ -141,72 +130,44 @@ export default function AdminPage() {
     }
   }, [authLoading, isAdmin]);
 
-  const syncPlayers = async () => {
-    setSyncing(true);
-    let createdCount = 0;
-    let linkedCount = 0;
+  const createUser = async () => {
+    if (!createForm.email || !createForm.password || !createForm.firstName || !createForm.lastName) {
+      toast.error('Tous les champs sont requis');
+      return;
+    }
+    if (createForm.password.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
 
+    setCreating(true);
     try {
-      // 1. Get all players and users
-      const { data: allPlayers } = await supabase.from('tournament_players').select('id, email, user_id');
-      const { data: allUsers } = await supabase.from('user_accounts').select('*');
+      const res = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: createForm.email,
+          password: createForm.password,
+          firstName: createForm.firstName,
+          lastName: createForm.lastName,
+          role: createForm.role,
+        }),
+      });
 
-      if (!allUsers) return;
-
-      for (const u of allUsers) {
-        const linkedPlayer = allPlayers?.find(p => p.user_id === u.id);
-        const unlinkedPlayerByEmail = allPlayers?.find(p => !p.user_id && p.email?.toLowerCase() === u.email?.toLowerCase());
-
-        if (!linkedPlayer) {
-          if (unlinkedPlayerByEmail) {
-            // Link existing
-            console.log('Linking user', u.id, 'to player', unlinkedPlayerByEmail.id);
-            const { error: linkError } = await supabase.from('tournament_players').update({ user_id: u.id }).eq('id', unlinkedPlayerByEmail.id);
-            if (linkError) {
-              console.error('Error linking player:', linkError);
-              throw linkError;
-            }
-            linkedCount++;
-          } else {
-            // Check if ANYONE already has this email linked (to avoid double profile)
-            const alreadyTaken = allPlayers?.some(p => p.email?.toLowerCase() === u.email?.toLowerCase());
-            if (alreadyTaken) {
-              console.log('Email', u.email, 'already taken by another linked profile, skipping creation');
-              continue;
-            }
-
-            // Create new
-            console.log('Creating new player for user', u.id);
-            const nameParts = u.display_name.trim().split(/\s+/);
-            const firstName = nameParts[0] || 'Joueur';
-            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-
-            const { error: createError } = await supabase.from('tournament_players').insert({
-              id: crypto.randomUUID(),
-              user_id: u.id,
-              email: u.email,
-              first_name: firstName,
-              last_name: lastName,
-              username: u.display_name.toLowerCase().replace(/\s/g, '_') + '_' + Math.random().toString(36).substring(2, 5), // Avoid collision
-              city: '',
-              created_at: new Date().toISOString(),
-            });
-            if (createError) {
-              console.error('Error creating player:', createError);
-              throw createError;
-            }
-            createdCount++;
-          }
-        }
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Erreur lors de la création');
+        return;
       }
 
-      toast.success(`${createdCount} profils créés, ${linkedCount} profils liés`);
-      fetchUsers(); // Refresh
-    } catch (err) {
-      console.error(err);
-      toast.error('Erreur lors de la synchronisation');
+      toast.success('Utilisateur créé avec succès !');
+      setShowCreateUser(false);
+      setCreateForm({ email: '', password: '', firstName: '', lastName: '', role: 'joueur' });
+      fetchUsers();
+    } catch {
+      toast.error('Erreur réseau');
     } finally {
-      setSyncing(false);
+      setCreating(false);
     }
   };
 
@@ -291,17 +252,6 @@ export default function AdminPage() {
             Pilotez l'ensemble de la plateforme Pétanque Manager.
           </p>
         </div>
-        <div className="flex gap-4">
-          <Button
-            onClick={syncPlayers}
-            disabled={syncing}
-            variant="outline"
-            className="group hover:border-primary/50 transition-all font-bold"
-          >
-            <RefreshCcw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-            Synchroniser
-          </Button>
-        </div>
       </div>
 
       {error && (
@@ -325,19 +275,8 @@ export default function AdminPage() {
             }`}
         >
           <Users className="h-4 w-4" />
-          Membres
-          <Badge variant="secondary" className="ml-2 bg-muted/80">{users.length}</Badge>
-        </button>
-        <button
-          onClick={() => setActiveTab('profils')}
-          className={`flex items-center gap-2 px-8 py-3 text-sm font-bold transition-all rounded-xl whitespace-nowrap ${activeTab === 'profils'
-            ? 'bg-background text-primary shadow-lg shadow-black/5'
-            : 'text-muted-foreground hover:text-foreground'
-            }`}
-        >
-          <UserPlus className="h-4 w-4" />
-          Joueurs (Tous)
-          <Badge variant="secondary" className="ml-2 bg-muted/80">{players.length}</Badge>
+          Utilisateurs
+          <Badge variant="secondary" className="ml-2 bg-muted/80">{unifiedUsers.length}</Badge>
         </button>
         <button
           onClick={() => setActiveTab('tournois')}
@@ -363,201 +302,224 @@ export default function AdminPage() {
         </button>
       </div>
 
-      {/* Joueurs Tab Content */}
+      {/* Utilisateurs Tab Content (Unifié) */}
       {activeTab === 'utilisateurs' && (
         <div className="grid gap-4">
-          <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 mb-4">
-            <h3 className="font-bold flex items-center gap-2 text-primary">
-              <Shield className="h-5 w-5" />
-              Comptes de connexion ({users.length})
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Utilisateurs inscrits sur la plateforme via email/mot de passe. Ils peuvent gérer leurs tournois et messages.
-            </p>
-          </div>
-          {users.map((u) => {
-            const linkedPlayer = players.find(p => p.userId === u.id);
-            return (
-              <Card
-                key={u.id}
-                className="group border-border/40 bg-card/50 hover:bg-card transition-all duration-300 hover:shadow-xl hover:shadow-primary/5"
-              >
-                <CardContent className="flex flex-col md:flex-row items-center justify-between p-6 gap-6">
-                  <div className="flex-1 flex items-center gap-4">
-                    {linkedPlayer ? (
-                      <Link href={`/profil/${linkedPlayer.id}`} title="Voir le profil complet">
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl uppercase shadow-inner hover:bg-primary/20 transition-all">
-                          {u.display_name?.[0] || u.email?.[0] || '?'}
-                        </div>
-                      </Link>
-                    ) : (
-                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl uppercase shadow-inner">
-                        {u.display_name?.[0] || u.email?.[0] || '?'}
-                      </div>
-                    )}
-                    <div>
-                      <div className="flex items-center gap-3">
-                        {linkedPlayer ? (
-                          <Link
-                            href={`/profil/${linkedPlayer.id}`}
-                            className="group/link flex items-center gap-2 hover:text-primary transition-colors"
-                            title="Voir le profil complet"
-                          >
-                            <p className="font-bold text-lg">{u.display_name || 'Utilisateur sans nom'}</p>
-                            <ExternalLink className="h-4 w-4 opacity-0 group-hover/link:opacity-100 transition-opacity" />
-                          </Link>
-                        ) : (
-                          <p className="font-bold text-lg">{u.display_name || 'Utilisateur sans nom'}</p>
-                        )}
-                        {u.id === user.id && (
-                          <Badge className="bg-primary/20 text-primary border-none text-[10px] font-black uppercase">Vous</Badge>
-                        )}
-                        <AuthStatus playerLinked={!!linkedPlayer} />
-                      </div>
-                      <p className="text-sm text-muted-foreground font-medium">{u.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2 p-1 bg-muted rounded-xl border border-border/40">
-                      {(['joueur', 'organisateur', 'admin'] as UserRole[]).map((role) => (
-                        <Button
-                          key={role}
-                          size="sm"
-                          variant={u.role === role ? 'default' : 'ghost'}
-                          className={`h-9 px-4 rounded-lg font-bold text-xs transition-all ${u.role === role ? 'shadow-md' : 'text-muted-foreground'
-                            } ${u.id === user.id ? 'pointer-events-none opacity-50' : ''}`}
-                          onClick={() => updateRole(u.id, role)}
-                          disabled={updating === u.id || u.id === user.id}
-                        >
-                          {roleLabels[role]}
-                        </Button>
-                      ))}
-                    </div>
-
-                    <div className="w-[120px] text-right hidden sm:block">
-                      <Badge className={`${roleColors[u.role]} border-none font-bold uppercase text-[10px] tracking-widest px-2.5 py-1 shadow-sm`}>
-                        {u.role === 'admin' && <Crown className="h-3 w-3 mr-1.5" />}
-                        {roleLabels[u.role]}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Profils Tab Content */}
-      {activeTab === 'profils' && (
-        <div className="grid gap-4">
-          <div className="bg-secondary/5 border border-secondary/10 rounded-2xl p-6 mb-4 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 mb-4 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h3 className="font-bold flex items-center gap-2 text-secondary-foreground">
+              <h3 className="font-bold flex items-center gap-2 text-primary">
                 <Users className="h-5 w-5" />
-                Liste complète des Joueurs ({players.length})
+                Utilisateurs ({unifiedUsers.length})
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Tous les profils présents en base de données, qu'ils disposent d'un compte de connexion ou qu'ils aient été créés manuellement.
+                Tous les membres inscrits sur la plateforme avec leur profil joueur.
               </p>
             </div>
-            <PlayerForm onSuccess={() => toast.success('Joueur créé avec succès !')} />
+            <Button
+              onClick={() => setShowCreateUser(true)}
+              className="font-bold gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Ajouter un utilisateur
+            </Button>
           </div>
-          {players.map((p) => (
+
+          {/* Dialog Ajouter un utilisateur */}
+          {showCreateUser && (
+            <Card className="border-primary/20 bg-primary/5 shadow-xl mb-4">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-bold text-lg flex items-center gap-2">
+                    <UserPlus className="h-5 w-5 text-primary" />
+                    Nouvel utilisateur
+                  </h3>
+                  <Button size="icon" variant="ghost" onClick={() => setShowCreateUser(false)} className="h-8 w-8">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Prénom</label>
+                    <input
+                      type="text"
+                      value={createForm.firstName}
+                      onChange={e => setCreateForm(f => ({ ...f, firstName: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      placeholder="Jean"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Nom</label>
+                    <input
+                      type="text"
+                      value={createForm.lastName}
+                      onChange={e => setCreateForm(f => ({ ...f, lastName: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      placeholder="Dupont"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Email</label>
+                    <input
+                      type="email"
+                      value={createForm.email}
+                      onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      placeholder="jean.dupont@email.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Mot de passe</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={createForm.password}
+                        onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                        className="w-full px-3 py-2 pr-10 rounded-lg border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        placeholder="Min. 8 caractères"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Rôle</label>
+                    <select
+                      value={createForm.role}
+                      onChange={e => setCreateForm(f => ({ ...f, role: e.target.value as UserRole }))}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    >
+                      <option value="joueur">Joueur</option>
+                      <option value="organisateur">Organisateur</option>
+                      <option value="admin">Administrateur</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-6">
+                  <Button onClick={createUser} disabled={creating} className="font-bold gap-2">
+                    {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                    {creating ? 'Création...' : 'Créer l\'utilisateur'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {unifiedUsers.map((u) => (
             <Card
-              key={p.id}
+              key={u.id}
               className="group border-border/40 bg-card/50 hover:bg-card transition-all duration-300 hover:shadow-xl hover:shadow-primary/5"
             >
               <CardContent className="flex flex-col md:flex-row items-center justify-between p-6 gap-6">
                 <div className="flex-1 flex items-center gap-4">
-                  <Link href={`/profil/${p.id}`} className="shrink-0 hover:opacity-80 transition-opacity">
-                    <img
-                      src={p.avatar}
-                      alt=""
-                      className="h-12 w-12 rounded-full border border-border/50 object-cover shadow-sm"
-                    />
-                  </Link>
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <Link
-                        href={`/profil/${p.id}`}
-                        className="group/link flex items-center gap-2 hover:text-primary transition-colors"
-                        title="Voir le profil complet"
-                      >
-                        <p className="font-bold text-lg flex items-center gap-2">
-                          {p.firstName} {p.lastName}
-                        </p>
-                        <ExternalLink className="h-4 w-4 opacity-0 group-hover/link:opacity-100 transition-opacity" />
-                      </Link>
-                      {p.userId && p.userId !== 'null' && p.userId !== 'undefined' && (
-                        <span title={`Lié au compte ID: ${p.userId}`}>
-                          <LinkIcon className="h-4 w-4 text-primary" />
-                        </span>
-                      )}
-                      {p.userId ? (
-                        <Badge className="bg-green-100 text-green-700 border-none text-[10px] font-bold py-0.5 px-2">Membre</Badge>
+                  {u.player ? (
+                    <Link href={`/profil/${u.player.id}`} title="Voir le profil complet" className="shrink-0">
+                      {u.player.avatar ? (
+                        <img src={u.player.avatar} alt="" className="h-12 w-12 rounded-full object-cover shadow-inner hover:opacity-80 transition-all" />
                       ) : (
-                        <Badge className="bg-gray-100 text-gray-500 border-none text-[10px] font-bold py-0.5 px-2">Manuel</Badge>
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl uppercase shadow-inner hover:bg-primary/20 transition-all">
+                          {u.player.firstName?.[0] || u.display_name?.[0] || '?'}
+                        </div>
+                      )}
+                    </Link>
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl uppercase shadow-inner shrink-0">
+                      {u.display_name?.[0] || u.email?.[0] || '?'}
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {u.player ? (
+                        <Link
+                          href={`/profil/${u.player.id}`}
+                          className="group/link flex items-center gap-2 hover:text-primary transition-colors"
+                          title="Voir le profil complet"
+                        >
+                          <p className="font-bold text-lg">{u.player.firstName} {u.player.lastName}</p>
+                          <ExternalLink className="h-4 w-4 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                        </Link>
+                      ) : (
+                        <p className="font-bold text-lg">{u.display_name || 'Utilisateur sans nom'}</p>
+                      )}
+                      {u.id === user.id && (
+                        <Badge className="bg-primary/20 text-primary border-none text-[10px] font-black uppercase">Vous</Badge>
+                      )}
+                      {!u.player && (
+                        <Badge className="bg-amber-100 text-amber-700 border-none text-[10px] font-bold py-0.5 px-2 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          Profil manquant
+                        </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground font-medium truncate max-w-[200px]">{p.email || 'Pas d\'email'}</p>
+                    <p className="text-sm text-muted-foreground font-medium">{u.email}</p>
+                    {u.player?.location?.city && u.player.location.city !== 'Non renseigné' && (
+                      <p className="text-xs text-muted-foreground/70 flex items-center gap-1 mt-0.5">
+                        <MapPin className="h-3 w-3" />
+                        {u.player.location.city}
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-8">
-                  <div className="text-center hidden sm:block">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1">Inscrit le</p>
-                    <p className="text-xs font-bold">{new Date(p.createdAt).toLocaleDateString()}</p>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2 p-1 bg-muted rounded-xl border border-border/40">
+                    {(['joueur', 'organisateur', 'admin'] as UserRole[]).map((role) => (
+                      <Button
+                        key={role}
+                        size="sm"
+                        variant={u.role === role ? 'default' : 'ghost'}
+                        className={`h-9 px-4 rounded-lg font-bold text-xs transition-all ${u.role === role ? 'shadow-md' : 'text-muted-foreground'
+                          } ${u.id === user.id ? 'pointer-events-none opacity-50' : ''}`}
+                        onClick={() => updateRole(u.id, role)}
+                        disabled={updating === u.id || u.id === user.id}
+                      >
+                        {roleLabels[role]}
+                      </Button>
+                    ))}
                   </div>
 
-                  <div className="flex items-center gap-2 pl-4 border-l border-border/40">
-                    {!p.userId && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-9 rounded-lg text-xs font-bold gap-1.5 border-primary/30 text-primary hover:bg-primary/10 transition-all"
-                        onClick={() => setCreateAccountPlayer(p)}
-                        title="Créer un compte utilisateur pour ce joueur"
-                      >
-                        <UserPlus className="h-3.5 w-3.5" />
-                        Créer un compte
-                      </Button>
-                    )}
+                  <div className="w-[120px] text-right hidden sm:block">
+                    <Badge className={`${roleColors[u.role]} border-none font-bold uppercase text-[10px] tracking-widest px-2.5 py-1 shadow-sm`}>
+                      {u.role === 'admin' && <Crown className="h-3 w-3 mr-1.5" />}
+                      {roleLabels[u.role]}
+                    </Badge>
+                  </div>
+
+                  {u.player && u.id !== user.id && (
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-9 w-9 rounded-lg text-destructive hover:bg-destructive/10 transition-all"
                       onClick={async () => {
-                        if (confirm(`Supprimer définitivement le profil de ${p.firstName} ${p.lastName} ?`)) {
+                        if (confirm(`Supprimer définitivement ${u.player!.firstName} ${u.player!.lastName} ?`)) {
                           try {
-                            await deletePlayer(p.id);
-                            toast.success('Joueur supprimé');
+                            await deletePlayer(u.player!.id);
+                            toast.success('Profil supprimé');
                           } catch (err: any) {
                             toast.error(err.message || 'Erreur lors de la suppression');
                           }
                         }
                       }}
-                      title="Supprimer le joueur"
+                      title="Supprimer le profil joueur"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           ))}
 
-          {createAccountPlayer && (
-            <CreateAccountDialog
-              player={createAccountPlayer}
-              open={!!createAccountPlayer}
-              onOpenChange={(open) => { if (!open) setCreateAccountPlayer(null); }}
-              onSuccess={() => {
-                setCreateAccountPlayer(null);
-                toast.success('Compte créé et lié au joueur !');
-              }}
-            />
+          {unifiedUsers.length === 0 && (
+            <div className="text-center py-20 bg-muted/20 rounded-3xl border border-dashed border-border/60">
+              <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <p className="text-muted-foreground font-medium">Aucun utilisateur trouvé</p>
+            </div>
           )}
         </div>
       )}

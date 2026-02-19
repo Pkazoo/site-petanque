@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { useTournament } from "@/lib/context/TournamentContext";
 import { useAuth } from "@/lib/context/AuthContext";
-import { PlayerForm } from "@/components/tournois/PlayerForm";
+
 import { TeamComposition } from "@/components/tournois/TeamComposition";
 import { TournamentBracket } from "@/components/tournois/TournamentBracket";
 import { getTournamentTypeLabel } from "@/lib/mock/data";
@@ -328,7 +328,6 @@ export default function TournamentManagementPage({ params }: { params: Promise<{
                     <Card className={isStarted ? "opacity-75 pointer-events-none" : ""}>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-lg">Joueurs disponibles</CardTitle>
-                            {!isStarted && <PlayerForm />}
                         </CardHeader>
                         <CardContent>
                             <div className="border border-border rounded-lg max-h-[500px] overflow-y-auto divide-y divide-border">
