@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useTournament } from '@/lib/context/TournamentContext';
 import { createClient } from '@/lib/supabase/client';
@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import Link from 'next/link';
-import { Shield, Users, Crown, AlertCircle, Trophy, Trash2, ArrowUp, ArrowDown, MapPin, Calendar, CheckCircle2, UserPlus, ExternalLink, Swords, X, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Shield, Users, Crown, AlertCircle, Trophy, Trash2, ArrowUp, ArrowDown, MapPin, Calendar, CheckCircle2, UserPlus, ExternalLink, Swords, X, Eye, EyeOff, Loader2, Pencil, Camera, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const roleLabels: Record<UserRole, string> = {
@@ -32,7 +32,7 @@ const roleColors: Record<UserRole, string> = {
 
 export default function AdminPage() {
   const { user, userAccount, isAdmin, loading: authLoading } = useAuth();
-  const { tournaments, players, deletePlayer, leagues, leagueMatches, deleteLeague } = useTournament();
+  const { tournaments, players, deletePlayer, updatePlayer, leagues, leagueMatches, deleteLeague } = useTournament();
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -46,6 +46,12 @@ export default function AdminPage() {
   const [createForm, setCreateForm] = useState({ email: '', password: '', firstName: '', lastName: '', role: 'joueur' as UserRole });
   const [creating, setCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Edition de profil
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', bio: '', city: '', avatar: '' });
+  const [saving, setSaving] = useState(false);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   const supabase = createClient();
 
@@ -168,6 +174,103 @@ export default function AdminPage() {
       toast.error('Erreur réseau');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const startEditing = (u: typeof unifiedUsers[0]) => {
+    setEditingUserId(u.id);
+    setEditForm({
+      firstName: u.player?.firstName || u.display_name?.split(' ')[0] || '',
+      lastName: u.player?.lastName || u.display_name?.split(' ').slice(1).join(' ') || '',
+      bio: u.player?.bio || '',
+      city: u.player?.location?.city || '',
+      avatar: u.player?.avatar || '',
+    });
+  };
+
+  const compressImage = (file: File, maxSizeKB: number = 300): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDimension = 800;
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) { height = (height / width) * maxDimension; width = maxDimension; }
+            else { width = (width / height) * maxDimension; height = maxDimension; }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d')!;
+          ctx.drawImage(img, 0, 0, width, height);
+          let quality = 0.9;
+          let result = canvas.toDataURL('image/jpeg', quality);
+          while (result.length > maxSizeKB * 1024 && quality > 0.1) {
+            quality -= 0.1;
+            result = canvas.toDataURL('image/jpeg', quality);
+          }
+          resolve(result);
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleEditPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await compressImage(file, 300);
+      setEditForm(f => ({ ...f, avatar: compressed }));
+    } catch {
+      toast.error('Erreur lors du chargement de l\'image');
+    }
+  };
+
+  const saveEdit = async () => {
+    const editUser = unifiedUsers.find(u => u.id === editingUserId);
+    if (!editUser?.player) {
+      toast.error('Profil joueur introuvable');
+      return;
+    }
+    if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
+      toast.error('Le prénom et le nom sont requis');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updatePlayer(editUser.player.id, {
+        firstName: editForm.firstName.trim(),
+        lastName: editForm.lastName.trim(),
+        bio: editForm.bio.trim(),
+        avatar: editForm.avatar || undefined,
+        location: {
+          city: editForm.city.trim(),
+          lat: editUser.player.location?.lat || 0,
+          lng: editUser.player.location?.lng || 0,
+        },
+      });
+
+      // Mettre à jour display_name dans user_accounts
+      await supabase.from('user_accounts').update({
+        display_name: `${editForm.firstName.trim()} ${editForm.lastName.trim()}`.trim(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', editingUserId);
+
+      toast.success('Profil mis à jour !');
+      setEditingUserId(null);
+      fetchUsers();
+    } catch {
+      toast.error('Erreur lors de la mise à jour');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -415,102 +518,200 @@ export default function AdminPage() {
               key={u.id}
               className="group border-border/40 bg-card/50 hover:bg-card transition-all duration-300 hover:shadow-xl hover:shadow-primary/5"
             >
-              <CardContent className="flex flex-col md:flex-row items-center justify-between p-6 gap-6">
-                <div className="flex-1 flex items-center gap-4">
-                  {u.player ? (
-                    <Link href={`/profil/${u.player.id}`} title="Voir le profil complet" className="shrink-0">
-                      {u.player.avatar ? (
-                        <img src={u.player.avatar} alt="" className="h-12 w-12 rounded-full object-cover shadow-inner hover:opacity-80 transition-all" />
-                      ) : (
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl uppercase shadow-inner hover:bg-primary/20 transition-all">
-                          {u.player.firstName?.[0] || u.display_name?.[0] || '?'}
-                        </div>
-                      )}
-                    </Link>
-                  ) : (
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl uppercase shadow-inner shrink-0">
-                      {u.display_name?.[0] || u.email?.[0] || '?'}
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      {u.player ? (
-                        <Link
-                          href={`/profil/${u.player.id}`}
-                          className="group/link flex items-center gap-2 hover:text-primary transition-colors"
-                          title="Voir le profil complet"
-                        >
-                          <p className="font-bold text-lg">{u.player.firstName} {u.player.lastName}</p>
-                          <ExternalLink className="h-4 w-4 opacity-0 group-hover/link:opacity-100 transition-opacity" />
-                        </Link>
-                      ) : (
-                        <p className="font-bold text-lg">{u.display_name || 'Utilisateur sans nom'}</p>
-                      )}
-                      {u.id === user.id && (
-                        <Badge className="bg-primary/20 text-primary border-none text-[10px] font-black uppercase">Vous</Badge>
-                      )}
-                      {!u.player && (
-                        <Badge className="bg-amber-100 text-amber-700 border-none text-[10px] font-bold py-0.5 px-2 flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          Profil manquant
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground font-medium">{u.email}</p>
-                    {u.player?.location?.city && u.player.location.city !== 'Non renseigné' && (
-                      <p className="text-xs text-muted-foreground/70 flex items-center gap-1 mt-0.5">
-                        <MapPin className="h-3 w-3" />
-                        {u.player.location.city}
-                      </p>
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex-1 flex items-center gap-4">
+                    {u.player ? (
+                      <Link href={`/profil/${u.player.id}`} title="Voir le profil complet" className="shrink-0">
+                        {u.player.avatar ? (
+                          <img src={u.player.avatar} alt="" className="h-12 w-12 rounded-full object-cover shadow-inner hover:opacity-80 transition-all" />
+                        ) : (
+                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl uppercase shadow-inner hover:bg-primary/20 transition-all">
+                            {u.player.firstName?.[0] || u.display_name?.[0] || '?'}
+                          </div>
+                        )}
+                      </Link>
+                    ) : (
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl uppercase shadow-inner shrink-0">
+                        {u.display_name?.[0] || u.email?.[0] || '?'}
+                      </div>
                     )}
+                    <div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {u.player ? (
+                          <Link
+                            href={`/profil/${u.player.id}`}
+                            className="group/link flex items-center gap-2 hover:text-primary transition-colors"
+                            title="Voir le profil complet"
+                          >
+                            <p className="font-bold text-lg">{u.player.firstName} {u.player.lastName}</p>
+                            <ExternalLink className="h-4 w-4 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                          </Link>
+                        ) : (
+                          <p className="font-bold text-lg">{u.display_name || 'Utilisateur sans nom'}</p>
+                        )}
+                        {u.id === user.id && (
+                          <Badge className="bg-primary/20 text-primary border-none text-[10px] font-black uppercase">Vous</Badge>
+                        )}
+                        {!u.player && (
+                          <Badge className="bg-amber-100 text-amber-700 border-none text-[10px] font-bold py-0.5 px-2 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Profil manquant
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground font-medium">{u.email}</p>
+                      {u.player?.location?.city && u.player.location.city !== 'Non renseigné' && (
+                        <p className="text-xs text-muted-foreground/70 flex items-center gap-1 mt-0.5">
+                          <MapPin className="h-3 w-3" />
+                          {u.player.location.city}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2 p-1 bg-muted rounded-xl border border-border/40">
+                      {(['joueur', 'organisateur', 'admin'] as UserRole[]).map((role) => (
+                        <Button
+                          key={role}
+                          size="sm"
+                          variant={u.role === role ? 'default' : 'ghost'}
+                          className={`h-9 px-4 rounded-lg font-bold text-xs transition-all ${u.role === role ? 'shadow-md' : 'text-muted-foreground'
+                            } ${u.id === user.id ? 'pointer-events-none opacity-50' : ''}`}
+                          onClick={() => updateRole(u.id, role)}
+                          disabled={updating === u.id || u.id === user.id}
+                        >
+                          {roleLabels[role]}
+                        </Button>
+                      ))}
+                    </div>
+
+                    <div className="w-[120px] text-right hidden sm:block">
+                      <Badge className={`${roleColors[u.role]} border-none font-bold uppercase text-[10px] tracking-widest px-2.5 py-1 shadow-sm`}>
+                        {u.role === 'admin' && <Crown className="h-3 w-3 mr-1.5" />}
+                        {roleLabels[u.role]}
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {u.player && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-9 w-9 rounded-lg text-primary hover:bg-primary/10 transition-all"
+                          onClick={() => editingUserId === u.id ? setEditingUserId(null) : startEditing(u)}
+                          title="Modifier le profil"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {u.player && u.id !== user.id && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-9 w-9 rounded-lg text-destructive hover:bg-destructive/10 transition-all"
+                          onClick={async () => {
+                            if (confirm(`Supprimer définitivement ${u.player!.firstName} ${u.player!.lastName} ?`)) {
+                              try {
+                                await deletePlayer(u.player!.id);
+                                toast.success('Profil supprimé');
+                              } catch (err: any) {
+                                toast.error(err.message || 'Erreur lors de la suppression');
+                              }
+                            }
+                          }}
+                          title="Supprimer le profil joueur"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2 p-1 bg-muted rounded-xl border border-border/40">
-                    {(['joueur', 'organisateur', 'admin'] as UserRole[]).map((role) => (
-                      <Button
-                        key={role}
-                        size="sm"
-                        variant={u.role === role ? 'default' : 'ghost'}
-                        className={`h-9 px-4 rounded-lg font-bold text-xs transition-all ${u.role === role ? 'shadow-md' : 'text-muted-foreground'
-                          } ${u.id === user.id ? 'pointer-events-none opacity-50' : ''}`}
-                        onClick={() => updateRole(u.id, role)}
-                        disabled={updating === u.id || u.id === user.id}
-                      >
-                        {roleLabels[role]}
+                {/* Formulaire d'édition inline */}
+                {editingUserId === u.id && u.player && (
+                  <div className="mt-6 pt-6 border-t border-border/40">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="relative">
+                        {editForm.avatar ? (
+                          <img src={editForm.avatar} alt="" className="h-16 w-16 rounded-full object-cover border-2 border-primary/30" />
+                        ) : (
+                          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl uppercase">
+                            {editForm.firstName?.[0] || '?'}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => editFileInputRef.current?.click()}
+                          className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-primary text-white flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors"
+                        >
+                          <Camera className="h-3.5 w-3.5" />
+                        </button>
+                        <input
+                          ref={editFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleEditPhotoChange}
+                          className="hidden"
+                        />
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm">Modifier le profil</p>
+                        <p className="text-xs text-muted-foreground">Cliquez sur l'appareil photo pour changer l'avatar</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Prénom</label>
+                        <input
+                          type="text"
+                          value={editForm.firstName}
+                          onChange={e => setEditForm(f => ({ ...f, firstName: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Nom</label>
+                        <input
+                          type="text"
+                          value={editForm.lastName}
+                          onChange={e => setEditForm(f => ({ ...f, lastName: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Ville</label>
+                        <input
+                          type="text"
+                          value={editForm.city}
+                          onChange={e => setEditForm(f => ({ ...f, city: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          placeholder="Non renseigné"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Bio</label>
+                        <input
+                          type="text"
+                          value={editForm.bio}
+                          onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          placeholder="Courte description..."
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3 mt-4">
+                      <Button variant="outline" size="sm" onClick={() => setEditingUserId(null)} className="font-bold">
+                        Annuler
                       </Button>
-                    ))}
+                      <Button size="sm" onClick={saveEdit} disabled={saving} className="font-bold gap-2">
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        {saving ? 'Enregistrement...' : 'Enregistrer'}
+                      </Button>
+                    </div>
                   </div>
-
-                  <div className="w-[120px] text-right hidden sm:block">
-                    <Badge className={`${roleColors[u.role]} border-none font-bold uppercase text-[10px] tracking-widest px-2.5 py-1 shadow-sm`}>
-                      {u.role === 'admin' && <Crown className="h-3 w-3 mr-1.5" />}
-                      {roleLabels[u.role]}
-                    </Badge>
-                  </div>
-
-                  {u.player && u.id !== user.id && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-9 w-9 rounded-lg text-destructive hover:bg-destructive/10 transition-all"
-                      onClick={async () => {
-                        if (confirm(`Supprimer définitivement ${u.player!.firstName} ${u.player!.lastName} ?`)) {
-                          try {
-                            await deletePlayer(u.player!.id);
-                            toast.success('Profil supprimé');
-                          } catch (err: any) {
-                            toast.error(err.message || 'Erreur lors de la suppression');
-                          }
-                        }
-                      }}
-                      title="Supprimer le profil joueur"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+                )}
               </CardContent>
             </Card>
           ))}
