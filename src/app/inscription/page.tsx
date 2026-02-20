@@ -29,21 +29,62 @@ export default function InscriptionPage() {
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Vérifier la taille (max 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                setError("La photo ne doit pas dépasser 5 Mo");
+            if (file.size > 10 * 1024 * 1024) {
+                setError("La photo ne doit pas dépasser 10 Mo");
                 return;
             }
 
+            try {
+                // Compresser l'image avant de la stocker
+                const compressed = await compressImage(file);
+                setProfilePhoto(compressed);
+            } catch {
+                setError("Erreur lors du traitement de la photo. Réessayez.");
+            }
+        }
+    };
+
+    const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setProfilePhoto(reader.result as string);
+            reader.onerror = reject;
+            reader.onload = () => {
+                const img = new Image();
+                img.onerror = reject;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const maxDim = 800;
+                    let { width, height } = img;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round(height * maxDim / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round(width * maxDim / height);
+                            height = maxDim;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) { reject(new Error('Canvas error')); return; }
+                    ctx.drawImage(img, 0, 0, width, height);
+                    let quality = 0.8;
+                    let result = canvas.toDataURL('image/jpeg', quality);
+                    const maxBytes = 300 * 1024 * 1.37;
+                    while (result.length > maxBytes && quality > 0.1) {
+                        quality -= 0.1;
+                        result = canvas.toDataURL('image/jpeg', quality);
+                    }
+                    resolve(result);
+                };
+                img.src = reader.result as string;
             };
             reader.readAsDataURL(file);
-        }
+        });
     };
 
     // Redirect if already logged in
@@ -199,7 +240,8 @@ export default function InscriptionPage() {
                                 <input
                                     ref={fileInputRef}
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    capture="user"
                                     onChange={handlePhotoChange}
                                     className="hidden"
                                     disabled={loading}

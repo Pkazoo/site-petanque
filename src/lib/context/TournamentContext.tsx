@@ -362,10 +362,16 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
 
     const createTeam = async (tournamentId: string, playerIds: string[], name?: string) => {
         const tempId = crypto.randomUUID();
+        // Auto-générer un nom si aucun n'est fourni
+        let teamName = name?.trim() || undefined;
+        if (!teamName) {
+            const existingTeams = teams.filter(t => t.tournamentId === tournamentId);
+            teamName = `Équipe ${existingTeams.length + 1}`;
+        }
         const { error } = await supabase.from('tournament_teams').insert({
             id: tempId,
             tournament_id: tournamentId,
-            name,
+            name: teamName,
             player_ids: playerIds,
         });
         if (error) throw error;
@@ -490,21 +496,19 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
             await assignTerrains(allMatchInserts as { id: string }[], terrainCount);
         } else {
             // === FORMAT ELIMINATION DIRECTE ===
-            // Calculer la puissance de 2 supérieure pour éviter les doubles byes
+            // Apparier les équipes 2 par 2, max 1 exempt si nombre impair
             const n = shuffled.length;
-            const nextPow2 = Math.pow(2, Math.ceil(Math.log2(n)));
-            const numByes = nextPow2 - n;
-            const totalFirstRoundMatches = nextPow2 / 2;
+            const numRealMatches = Math.floor(n / 2);
+            const hasBye = n % 2 === 1;
 
             const matchPairs: { team1Id: string; team2Id: string | null }[] = [];
-            // Les premières places sont des byes (avance automatique au tour 2)
-            for (let i = 0; i < numByes; i++) {
-                matchPairs.push({ team1Id: shuffled[i].id, team2Id: null });
+            // Vrais matchs d'abord
+            for (let i = 0; i < numRealMatches; i++) {
+                matchPairs.push({ team1Id: shuffled[i * 2].id, team2Id: shuffled[i * 2 + 1].id });
             }
-            // Les matchs restants sont de vrais matchs
-            for (let i = 0; i < totalFirstRoundMatches - numByes; i++) {
-                const idx = numByes + i * 2;
-                matchPairs.push({ team1Id: shuffled[idx].id, team2Id: shuffled[idx + 1].id });
+            // 1 seul exempt si nombre impair (la dernière équipe)
+            if (hasBye) {
+                matchPairs.push({ team1Id: shuffled[n - 1].id, team2Id: null });
             }
 
             const matchInserts = matchPairs.map((pair, idx) => ({
@@ -528,7 +532,9 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
                 return;
             }
 
-            await assignTerrains(matchInserts, terrainCount);
+            // N'assigner des terrains qu'aux vrais matchs (pas les byes)
+            const realMatches = matchInserts.filter(m => m.team2_id !== null);
+            await assignTerrains(realMatches, terrainCount);
         }
 
         await supabase.from('tournaments').update({ status: 'ongoing' }).eq('id', tournamentId);
@@ -553,21 +559,19 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
         phase: string,
         isConsolation: boolean,
     ) => {
-        // Calculer la puissance de 2 supérieure pour éviter les doubles byes
+        // Apparier les vainqueurs 2 par 2, max 1 exempt si nombre impair
         const nw = winners.length;
-        const nextPow2 = Math.pow(2, Math.ceil(Math.log2(nw)));
-        const numByes = nextPow2 - nw;
-        const totalMatches = nextPow2 / 2;
+        const numRealMatches = Math.floor(nw / 2);
+        const hasBye = nw % 2 === 1;
 
         const nextMatchPairs: { team1Id: string; team2Id: string | null }[] = [];
-        // Byes en premier (avance automatique)
-        for (let i = 0; i < numByes; i++) {
-            nextMatchPairs.push({ team1Id: winners[i], team2Id: null });
-        }
         // Vrais matchs
-        for (let i = 0; i < totalMatches - numByes; i++) {
-            const idx = numByes + i * 2;
-            nextMatchPairs.push({ team1Id: winners[idx], team2Id: winners[idx + 1] });
+        for (let i = 0; i < numRealMatches; i++) {
+            nextMatchPairs.push({ team1Id: winners[i * 2], team2Id: winners[i * 2 + 1] });
+        }
+        // 1 seul exempt si nombre impair
+        if (hasBye) {
+            nextMatchPairs.push({ team1Id: winners[nw - 1], team2Id: null });
         }
 
         const nextInserts = nextMatchPairs.map((pair, idx) => ({
@@ -590,7 +594,9 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
             console.error('Error creating next round matches:', nextError.message, nextError.details, nextError.hint);
         }
         if (!nextError) {
-            await assignTerrains(nextInserts, terrainCount);
+            // N'assigner des terrains qu'aux vrais matchs (pas les byes)
+            const realMatches = nextInserts.filter(m => m.team2_id !== null);
+            await assignTerrains(realMatches, terrainCount);
         }
         return nextInserts;
     };

@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import Link from 'next/link';
-import { Shield, Users, Crown, AlertCircle, Trophy, Trash2, ArrowUp, ArrowDown, MapPin, Calendar, CheckCircle2, UserPlus, ExternalLink, Swords, X, Eye, EyeOff, Loader2, Pencil, Camera, Save } from 'lucide-react';
+import { Shield, Users, Crown, AlertCircle, Trophy, Trash2, ArrowUp, ArrowDown, MapPin, Calendar, CheckCircle2, UserPlus, ExternalLink, Swords, X, Eye, EyeOff, Loader2, Pencil, Camera, Save, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const roleLabels: Record<UserRole, string> = {
@@ -46,6 +46,12 @@ export default function AdminPage() {
   const [createForm, setCreateForm] = useState({ email: '', password: '', firstName: '', lastName: '', role: 'joueur' as UserRole });
   const [creating, setCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Reset password
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   // Edition de profil
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -174,6 +180,41 @@ export default function AdminPage() {
       toast.error('Erreur réseau');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const resetPassword = async () => {
+    if (!resetPasswordUserId || !newPassword) {
+      toast.error('Veuillez entrer un nouveau mot de passe');
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    setResettingPassword(true);
+    try {
+      const res = await fetch('/api/admin/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: resetPasswordUserId, newPassword }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Erreur lors de la réinitialisation');
+        return;
+      }
+
+      toast.success('Mot de passe réinitialisé !');
+      setResetPasswordUserId(null);
+      setNewPassword('');
+      setShowResetPassword(false);
+    } catch {
+      toast.error('Erreur réseau');
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -606,6 +647,21 @@ export default function AdminPage() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                       )}
+                      {u.id !== user.id && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-9 w-9 rounded-lg text-orange-600 hover:bg-orange-100 transition-all"
+                          onClick={() => {
+                            setResetPasswordUserId(u.id);
+                            setNewPassword('');
+                            setShowResetPassword(true);
+                          }}
+                          title="Réinitialiser le mot de passe"
+                        >
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                      )}
                       {u.player && u.id !== user.id && (
                         <Button
                           size="icon"
@@ -921,6 +977,55 @@ export default function AdminPage() {
               <p className="text-muted-foreground font-medium">Aucune ligue trouvée</p>
             </div>
           )}
+        </div>
+      )}
+      {/* Dialog reset password */}
+      {showResetPassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-orange-100 flex items-center justify-center">
+                  <KeyRound className="h-5 w-5 text-orange-600" />
+                </div>
+                <h3 className="font-bold text-lg">Réinitialiser le mot de passe</h3>
+              </div>
+              <button onClick={() => { setShowResetPassword(false); setResetPasswordUserId(null); setNewPassword(''); }} className="text-muted-foreground hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Entrez le nouveau mot de passe pour{' '}
+              <strong>{unifiedUsers.find(u => u.id === resetPasswordUserId)?.player?.firstName || unifiedUsers.find(u => u.id === resetPasswordUserId)?.display_name || 'cet utilisateur'}</strong>
+            </p>
+            <div className="relative mb-4">
+              <input
+                type={showResetPassword ? 'text' : 'password'}
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="Nouveau mot de passe (min. 8 caractères)"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => { setShowResetPassword(false); setResetPasswordUserId(null); setNewPassword(''); }}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={resetPassword}
+                disabled={resettingPassword || newPassword.length < 8}
+              >
+                {resettingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Confirmer
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

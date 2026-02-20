@@ -111,6 +111,27 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
     }, [match.score1, match.score2]);
 
     const isCompleted = match.status === 'completed';
+    const isBye = !match.team2Id && isCompleted && match.winnerId === match.team1Id;
+
+    // Rendu simplifié pour les matchs Bye (exempt)
+    if (isBye) {
+        return (
+            <Card className="w-72 border-2 border-gray-200 bg-gray-50/50">
+                <CardContent className="p-3">
+                    <div className="text-xs text-muted-foreground mb-2 flex justify-between items-center">
+                        <span>Match #{match.matchNumber + 1}</span>
+                        <span className="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-bold">Exempt</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 rounded bg-green-100 dark:bg-green-900/30">
+                        <div className="truncate flex-1 text-sm font-bold text-foreground">
+                            {team1?.name || "Équipe"}
+                        </div>
+                        <span className="text-xs text-green-600 font-medium">Qualifié(e)</span>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
 
     // Vérifier si les deux équipes ont validé
     const bothValidated = match.team1Validated && match.team2Validated;

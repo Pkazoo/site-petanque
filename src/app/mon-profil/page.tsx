@@ -778,14 +778,12 @@ export default function MonProfilPage() {
                         S&apos;inscrire à un tournoi
                     </Button>
                 </Link>
-                {isOrganisateur && (
-                    <Link href="/tournois/creer" className="block mt-4">
-                        <Button variant="outline" className="w-full gap-2 h-14 text-lg" size="lg">
-                            <Plus className="h-6 w-6" />
-                            Créer un tournoi
-                        </Button>
-                    </Link>
-                )}
+                <Link href="/tournois/creer" className="block mt-4">
+                    <Button variant="outline" className="w-full gap-2 h-14 text-lg" size="lg">
+                        <Plus className="h-6 w-6" />
+                        Créer un tournoi
+                    </Button>
+                </Link>
             </div>
 
             {/* Enlarged Avatar Modal */}
