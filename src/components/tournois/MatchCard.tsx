@@ -89,10 +89,9 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
         !(isTeam1 && match.team1Validated) &&
         !(isTeam2 && match.team2Validated);
 
-    // Pour les organisateurs: validation directe du match
+    // Pour les organisateurs/admin: validation directe du match (sans attendre les équipes)
     const handleAdminValidate = async () => {
         if (score1 === score2) return;
-        if (score1 !== 13 && score2 !== 13) return;
 
         setIsSubmitting(true);
         await updateMatchScore(match.id, score1, score2);
@@ -298,8 +297,8 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
                     </div>
                 )}
 
-                {/* Interface Admin/Organisateur pour gérer les scores (sauf si participant) */}
-                {match.status === 'ongoing' && canManageScores && !isParticipant && !isCompleted && (
+                {/* Interface Admin/Organisateur pour gérer les scores */}
+                {match.status === 'ongoing' && canManageScores && !isCompleted && (
                     <div className="border-t pt-3 mt-3">
                         <div className="text-xs font-medium mb-3 text-center text-orange-600">Mode Organisateur</div>
                         <div className="grid grid-cols-2 gap-4 mb-3">
@@ -359,21 +358,21 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
                             </div>
                         </div>
 
-                        {/* Bouton de validation admin */}
-                        {(score1 === 13 || score2 === 13) && score1 !== score2 && (
+                        {/* Bouton de validation admin/organisateur */}
+                        {(score1 > 0 || score2 > 0) && score1 !== score2 && (
                             <Button
                                 size="sm"
                                 className="w-full h-10 text-sm bg-orange-600 hover:bg-orange-700 font-semibold"
                                 onClick={handleAdminValidate}
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? "Validation..." : `Valider ${score1} - ${score2}`}
+                                {isSubmitting ? "Validation..." : `Forcer la validation ${score1} - ${score2}`}
                             </Button>
                         )}
 
-                        {(score1 < 13 && score2 < 13) && (score1 > 0 || score2 > 0) && (
+                        {(score1 === 0 && score2 === 0) && (
                             <p className="text-[10px] text-center text-muted-foreground">
-                                Le premier à 13 points gagne
+                                Entrez les scores pour valider le match
                             </p>
                         )}
                     </div>
