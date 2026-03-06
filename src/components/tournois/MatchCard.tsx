@@ -143,14 +143,14 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
     const hasDispute = bothValidated && !scoresMatch;
 
     return (
-        <Card className={`w-72 border-2 ${isParticipant ? "border-orange-500 bg-orange-100 dark:bg-orange-950/40 shadow-lg shadow-orange-300 dark:shadow-orange-900 ring-2 ring-orange-300 dark:ring-orange-700" : ""} ${!isParticipant && isCompleted ? "border-green-500/20 bg-green-50/50" : !isParticipant && scoresMatch ? "border-green-500 bg-green-50/50" : !isParticipant && hasDispute ? "border-red-500 bg-red-50/50" : !isParticipant ? "border-border" : ""}`}>
+        <Card className={`w-72 border-2 ${isParticipant ? "border-primary bg-primary/10 dark:bg-primary/10 shadow-lg shadow-primary/20 dark:shadow-primary/20 ring-2 ring-primary/30 dark:ring-primary/40" : ""} ${!isParticipant && isCompleted ? "border-green-500/20 bg-green-50/50" : !isParticipant && scoresMatch ? "border-green-500 bg-green-50/50" : !isParticipant && hasDispute ? "border-red-500 bg-red-50/50" : !isParticipant ? "border-border" : ""}`}>
             <CardContent className="p-3">
                 {/* En-tête */}
                 <div className="text-xs text-muted-foreground mb-2 flex justify-between items-center">
                     <span>Match #{match.matchNumber + 1}</span>
                     <div className="flex items-center gap-2">
                         {match.terrainNumber && (
-                            <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold">
+                            <span className="text-[10px] bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded-full font-bold">
                                 Terrain {match.terrainNumber}
                             </span>
                         )}
@@ -172,22 +172,22 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
 
                 {/* Affichage des équipes avec scores en temps réel */}
                 <div className="space-y-2 mb-3">
-                    <div className={`flex justify-between items-center p-2 rounded border-2 ${isTeam1 ? "border-orange-400 bg-orange-50 dark:bg-orange-900/20" : "border-transparent"} ${match.winnerId === match.team1Id ? "bg-green-100 dark:bg-green-900/30 font-bold" : score1 === 13 && !isCompleted ? "bg-blue-50" : ""}`}>
-                        <div className={`truncate flex-1 text-sm font-medium ${isTeam1 ? "text-orange-700 dark:text-orange-300" : ""}`} title={team1?.name}>
+                    <div className={`flex justify-between items-center p-2 rounded border-2 ${isTeam1 ? "border-primary/60 bg-primary/5 dark:bg-primary/10" : "border-transparent"} ${match.winnerId === match.team1Id ? "bg-green-100 dark:bg-green-900/30 font-bold" : score1 === 13 && !isCompleted ? "bg-primary/5" : ""}`}>
+                        <div className={`truncate flex-1 text-sm font-medium ${isTeam1 ? "text-primary dark:text-primary" : ""}`} title={team1?.name}>
                             {match.team1Id ? (team1?.name || "Équipe 1") : "..."}
                             {match.team1Validated && <Check className="inline h-3 w-3 ml-1 text-green-600" />}
                         </div>
-                        <span className={`font-bold ml-2 text-lg ${score1 === 13 && !isCompleted ? "text-blue-600" : ""}`}>
+                        <span className={`font-bold ml-2 text-lg ${score1 === 13 && !isCompleted ? "text-primary" : ""}`}>
                             {isCompleted ? (scoresMatch ? match.team1ProposedScore1 : match.score1) : (canManageScores && !isParticipant ? score1 : (isParticipant && isTeam1 ? ourScore : (isParticipant && isTeam2 ? theirScore : (match.score1 ?? "-"))))}
                         </span>
                     </div>
 
-                    <div className={`flex justify-between items-center p-2 rounded border-2 ${isTeam2 ? "border-orange-400 bg-orange-50 dark:bg-orange-900/20" : "border-transparent"} ${match.winnerId === match.team2Id ? "bg-green-100 dark:bg-green-900/30 font-bold" : score2 === 13 && !isCompleted ? "bg-orange-50" : ""}`}>
-                        <div className={`truncate flex-1 text-sm font-medium ${isTeam2 ? "text-orange-700 dark:text-orange-300" : ""}`} title={team2?.name}>
+                    <div className={`flex justify-between items-center p-2 rounded border-2 ${isTeam2 ? "border-primary/60 bg-primary/5 dark:bg-primary/10" : "border-transparent"} ${match.winnerId === match.team2Id ? "bg-green-100 dark:bg-green-900/30 font-bold" : score2 === 13 && !isCompleted ? "bg-secondary/10" : ""}`}>
+                        <div className={`truncate flex-1 text-sm font-medium ${isTeam2 ? "text-primary dark:text-primary" : ""}`} title={team2?.name}>
                             {match.team2Id ? (team2?.name || "Équipe 2") : (match.status === 'completed' && match.winnerId === match.team1Id ? "-- Bye --" : "...")}
                             {match.team2Validated && <Check className="inline h-3 w-3 ml-1 text-green-600" />}
                         </div>
-                        <span className={`font-bold ml-2 text-lg ${score2 === 13 && !isCompleted ? "text-orange-600" : ""}`}>
+                        <span className={`font-bold ml-2 text-lg ${score2 === 13 && !isCompleted ? "text-secondary" : ""}`}>
                             {isCompleted ? (scoresMatch ? match.team1ProposedScore2 : match.score2) : (canManageScores && !isParticipant ? score2 : (isParticipant && isTeam1 ? theirScore : (isParticipant && isTeam2 ? ourScore : (match.score2 ?? "-"))))}
                         </span>
                     </div>
@@ -249,7 +249,7 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
                                     {/* Score adversaire */}
                                     <div className="flex flex-col items-center">
                                         <label className="text-[10px] text-muted-foreground mb-1">Eux</label>
-                                        <div className="flex flex-col items-center bg-orange-500/5 rounded-lg p-2">
+                                        <div className="flex flex-col items-center bg-secondary/5 rounded-lg p-2">
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
@@ -259,7 +259,7 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
                                             >
                                                 <ChevronUp className="h-5 w-5" />
                                             </Button>
-                                            <span className={`text-3xl font-bold py-1 ${theirScore === 13 ? 'text-orange-600' : ''}`}>
+                                            <span className={`text-3xl font-bold py-1 ${theirScore === 13 ? 'text-secondary' : ''}`}>
                                                 {theirScore}
                                             </span>
                                             <Button
@@ -300,12 +300,12 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
                 {/* Interface Admin/Organisateur pour gérer les scores */}
                 {match.status === 'ongoing' && canManageScores && !isCompleted && (
                     <div className="border-t pt-3 mt-3">
-                        <div className="text-xs font-medium mb-3 text-center text-orange-600">Mode Organisateur</div>
+                        <div className="text-xs font-medium mb-3 text-center text-primary">Mode Organisateur</div>
                         <div className="grid grid-cols-2 gap-4 mb-3">
                             {/* Score Team 1 */}
                             <div className="flex flex-col items-center">
                                 <label className="text-[10px] text-muted-foreground mb-1 truncate max-w-full">{team1?.name || "Équipe 1"}</label>
-                                <div className="flex flex-col items-center bg-blue-500/10 rounded-lg p-2">
+                                <div className="flex flex-col items-center bg-primary/10 rounded-lg p-2">
                                     <Button
                                         size="sm"
                                         variant="ghost"
@@ -315,7 +315,7 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
                                     >
                                         <ChevronUp className="h-5 w-5" />
                                     </Button>
-                                    <span className={`text-3xl font-bold py-1 ${score1 === 13 ? 'text-blue-600' : ''}`}>
+                                    <span className={`text-3xl font-bold py-1 ${score1 === 13 ? 'text-primary' : ''}`}>
                                         {score1}
                                     </span>
                                     <Button
@@ -332,7 +332,7 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
                             {/* Score Team 2 */}
                             <div className="flex flex-col items-center">
                                 <label className="text-[10px] text-muted-foreground mb-1 truncate max-w-full">{team2?.name || "Équipe 2"}</label>
-                                <div className="flex flex-col items-center bg-orange-500/10 rounded-lg p-2">
+                                <div className="flex flex-col items-center bg-secondary/10 rounded-lg p-2">
                                     <Button
                                         size="sm"
                                         variant="ghost"
@@ -342,7 +342,7 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
                                     >
                                         <ChevronUp className="h-5 w-5" />
                                     </Button>
-                                    <span className={`text-3xl font-bold py-1 ${score2 === 13 ? 'text-orange-600' : ''}`}>
+                                    <span className={`text-3xl font-bold py-1 ${score2 === 13 ? 'text-secondary' : ''}`}>
                                         {score2}
                                     </span>
                                     <Button
@@ -362,7 +362,7 @@ export function MatchCard({ match, currentUserTeamId }: MatchCardProps) {
                         {(score1 > 0 || score2 > 0) && score1 !== score2 && (
                             <Button
                                 size="sm"
-                                className="w-full h-10 text-sm bg-orange-600 hover:bg-orange-700 font-semibold"
+                                className="w-full h-10 text-sm bg-primary hover:bg-primary/90 font-semibold"
                                 onClick={handleAdminValidate}
                                 disabled={isSubmitting}
                             >

@@ -7,12 +7,10 @@ import {
   Trophy,
   Users,
   ArrowRight,
-  QrCode,
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/context/AuthContext";
-import { getMobileUrl } from "@/lib/utils/getMobileUrl";
 
 export default function Home() {
   const router = useRouter();
@@ -36,64 +34,19 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Hero */}
-      <section className="relative pt-16 pb-10 md:pt-28 md:pb-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center space-y-8">
-            <img
-              src="/logo-fanny.png"
-              alt="PétanqueManager"
-              className="w-24 h-24 mx-auto rounded-2xl shadow-lg object-cover"
-            />
-            <h1 className="text-4xl md:text-6xl font-extrabold text-foreground tracking-tight leading-[1.1]">
-              Organisez vos concours{" "}
-              <span className="text-primary">simplement</span>
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Tournois locaux, ligues entre amis : gérez tout depuis votre téléphone. Inscription par QR code, scores en direct, classement automatique.
-            </p>
-            <div className="pt-2">
-              <Link href="/inscription">
-                <Button size="lg" className="rounded-full px-8 h-14 text-base font-bold shadow-lg bg-primary hover:bg-primary/90 text-white transition-all">
-                  Créer un compte
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* QR Code */}
-      <section className="py-10 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-4">
-              <QrCode className="h-4 w-4 text-primary" />
-              <span>Inscription rapide</span>
-            </div>
-            <div className="bg-white p-5 rounded-2xl shadow-lg">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(getMobileUrl('/inscription'))}`}
-                alt="QR Code Inscription"
-                className="w-40 h-40 rounded-lg"
-                loading="lazy"
-              />
-            </div>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Scannez depuis votre téléphone pour créer un compte
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="flex flex-col min-h-screen relative">
+      {/* Blobs décoratifs */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/[0.07] rounded-full blur-3xl" />
+        <div className="absolute top-1/3 -left-32 w-[500px] h-[500px] bg-secondary/[0.06] rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-72 h-72 bg-accent/[0.05] rounded-full blur-3xl" />
+      </div>
 
       {/* Comment ça marche */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-4">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-foreground text-center mb-4">
               Comment ça marche ?
             </h2>
             <p className="text-center text-muted-foreground mb-16 max-w-xl mx-auto">
@@ -102,7 +55,7 @@ export default function Home() {
 
             <div className="grid md:grid-cols-2 gap-24">
               {/* Concours */}
-              <div className="bg-card rounded-2xl border border-border/50 p-8 space-y-5">
+              <div className="bg-card rounded-3xl border border-border/30 p-8 space-y-5 shadow-lg shadow-primary/5">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                   <Trophy className="h-6 w-6 text-primary" />
                 </div>
@@ -126,9 +79,9 @@ export default function Home() {
               </div>
 
               {/* Ligues */}
-              <div className="bg-card rounded-2xl border border-border/50 p-8 space-y-5">
-                <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-                  <Users className="h-6 w-6 text-green-500" />
+              <div className="bg-card rounded-3xl border border-border/30 p-8 space-y-5 shadow-lg shadow-primary/5">
+                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
+                  <Users className="h-6 w-6 text-accent" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground">Ligues entre amis</h3>
                 <p className="text-muted-foreground leading-relaxed">
@@ -142,7 +95,7 @@ export default function Home() {
                     "Classement en temps réel",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3 text-sm text-muted-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 shrink-0" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -156,7 +109,7 @@ export default function Home() {
       {/* CTA */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-3xl">
-          <div className="bg-gradient-to-br from-primary to-primary/80 rounded-3xl p-12 md:p-16 text-center text-white relative overflow-hidden">
+          <div className="bg-gradient-to-br from-primary via-primary/90 to-accent/80 rounded-3xl p-12 md:p-16 text-center text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="relative z-10">
               <h2 className="text-3xl md:text-4xl font-black mb-4">

@@ -155,9 +155,9 @@ export function AddMatchForm({ league, players, onSuccess }: AddMatchFormProps) 
                 </div>
 
                 {/* Team 2 */}
-                <div className="bg-orange-50 dark:bg-orange-950/20 p-2 sm:p-3 rounded-xl border border-orange-200 dark:border-orange-800">
+                <div className="bg-amber-50 dark:bg-amber-950/20 p-2 sm:p-3 rounded-xl border border-amber-200 dark:border-amber-800">
                     <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                        <label className="text-[10px] sm:text-xs font-bold text-orange-700 dark:text-orange-400 flex items-center gap-1 sm:gap-1.5">
+                        <label className="text-[10px] sm:text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1 sm:gap-1.5">
                             <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                             Équipe 2
                         </label>
@@ -175,12 +175,12 @@ export function AddMatchForm({ league, players, onSuccess }: AddMatchFormProps) 
                                     e.stopPropagation();
                                     togglePlayer(p.id, 2);
                                 }}
-                                className={`flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-lg border cursor-pointer transition-all text-left ${team2Players.includes(p.id) ? "bg-orange-100 dark:bg-orange-900/30 border-orange-400" : "hover:bg-muted"
+                                className={`flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-lg border cursor-pointer transition-all text-left ${team2Players.includes(p.id) ? "bg-amber-100 dark:bg-amber-900/30 border-amber-400" : "hover:bg-muted"
                                     }`}
                             >
                                 <Avatar src={p.avatar} fallback={p.firstName[0]} className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
                                 <span className="text-[10px] sm:text-[11px] truncate">{p.firstName}</span>
-                                {team2Players.includes(p.id) && <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-orange-600 ml-auto shrink-0" />}
+                                {team2Players.includes(p.id) && <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-amber-600 ml-auto shrink-0" />}
                             </button>
                         ))}
                     </div>

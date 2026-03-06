@@ -311,15 +311,15 @@ export default function PlayerTournamentDetailPage() {
                 const canSubmitScore = (ourScore === 13 || theirScore === 13) && ourScore !== theirScore;
 
                 return (
-                    <Card id="match-en-cours" className="mb-6 border-2 border-orange-400 bg-orange-50 dark:bg-orange-950/20">
+                    <Card id="match-en-cours" className="mb-6 border-2 border-primary bg-primary/5 dark:bg-primary/10">
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-orange-600">
+                            <CardTitle className="flex items-center gap-2 text-primary">
                                 <Swords className="h-5 w-5" />
                                 Prochain match - {getRoundName(currentMatch.round)}
                             </CardTitle>
                             {currentMatch.terrainNumber && (
                                 <div className="flex items-center gap-2 mt-2">
-                                    <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 text-sm px-3 py-1 font-bold">
+                                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-sm px-3 py-1 font-bold">
                                         <MapPin className="h-4 w-4 mr-1" />
                                         Terrain {currentMatch.terrainNumber}
                                     </Badge>
@@ -472,7 +472,7 @@ export default function PlayerTournamentDetailPage() {
                                                     ? 'bg-green-50 dark:bg-green-950/20'
                                                     : 'bg-red-50 dark:bg-red-950/20'
                                                 : match === currentMatch
-                                                    ? 'bg-orange-50 dark:bg-orange-950/20 ring-2 ring-orange-400'
+                                                    ? 'bg-primary/5 dark:bg-primary/10 ring-2 ring-primary'
                                                     : 'bg-muted/50'
                                             }`}
                                     >
@@ -496,7 +496,7 @@ export default function PlayerTournamentDetailPage() {
                                                 )}
                                             </div>
                                         ) : match === currentMatch ? (
-                                            <Badge variant="outline" className="bg-orange-100 text-orange-600">
+                                            <Badge variant="outline" className="bg-primary/10 text-primary">
                                                 À jouer
                                             </Badge>
                                         ) : (

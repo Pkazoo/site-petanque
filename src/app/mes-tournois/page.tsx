@@ -262,8 +262,8 @@ export default function MesTournoisPage() {
                 <Card>
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-orange-100 rounded-lg">
-                                <Swords className="h-5 w-5 text-orange-600" />
+                            <div className="p-2 bg-primary/10 rounded-lg">
+                                <Swords className="h-5 w-5 text-primary" />
                             </div>
                             <div>
                                 <p className="text-2xl font-bold">{ongoingTournaments.length}</p>
@@ -306,13 +306,13 @@ export default function MesTournoisPage() {
                     {ongoingTournaments.length > 0 && (
                         <section>
                             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                                <Swords className="h-5 w-5 text-orange-500" />
+                                <Swords className="h-5 w-5 text-primary" />
                                 En cours
                             </h2>
                             <div className="grid gap-4">
                                 {ongoingTournaments.map(({ tournament, teamId, teamName, currentMatch }) => (
                                     <Link key={teamId} href={`/mes-tournois/${tournament.id}`}>
-                                        <Card className="hover:shadow-lg transition-all cursor-pointer border-orange-200 bg-orange-50/50">
+                                        <Card className="hover:shadow-lg transition-all cursor-pointer border-primary/20 bg-primary/5">
                                             <CardContent className="py-4">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex-1">
@@ -372,7 +372,7 @@ export default function MesTournoisPage() {
                     {upcomingTournaments.length > 0 && (
                         <section>
                             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                                <Clock className="h-5 w-5 text-blue-500" />
+                                <Clock className="h-5 w-5 text-primary" />
                                 À venir
                             </h2>
                             <div className="grid gap-4">
@@ -393,14 +393,14 @@ export default function MesTournoisPage() {
                                         : availableForTeam;
 
                                     return (
-                                        <Card key={teamId} className={`transition-all ${isTeamIncomplete ? 'border-orange-300 bg-orange-50/30' : ''}`}>
+                                        <Card key={teamId} className={`transition-all ${isTeamIncomplete ? 'border-amber-300 bg-amber-50/30' : ''}`}>
                                             <CardContent className="py-4">
                                                 <Link href={`/mes-tournois/${tournament.id}`}>
                                                     <div className="flex items-center justify-between cursor-pointer hover:opacity-80">
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2 mb-2">
                                                                 {isTeamIncomplete ? (
-                                                                    <Badge className="bg-orange-500 text-white">À compléter</Badge>
+                                                                    <Badge className="bg-amber-500 text-white">À compléter</Badge>
                                                                 ) : (
                                                                     <Badge variant="success">Inscrit</Badge>
                                                                 )}
@@ -433,10 +433,10 @@ export default function MesTournoisPage() {
 
                                                 {/* Team completion section for incomplete teams */}
                                                 {isTeamIncomplete && (
-                                                    <div className="mt-4 pt-4 border-t border-orange-200">
+                                                    <div className="mt-4 pt-4 border-t border-amber-200">
                                                         <div className="flex items-center gap-2 mb-3">
-                                                            <UserPlus className="h-4 w-4 text-orange-500" />
-                                                            <span className="text-sm font-medium text-orange-700">
+                                                            <UserPlus className="h-4 w-4 text-amber-500" />
+                                                            <span className="text-sm font-medium text-amber-700">
                                                                 {slotsRemaining} joueur{slotsRemaining > 1 ? 's' : ''} manquant{slotsRemaining > 1 ? 's' : ''}
                                                             </span>
                                                         </div>
@@ -453,7 +453,7 @@ export default function MesTournoisPage() {
                                                                 ) : null;
                                                             })}
                                                             {Array.from({ length: slotsRemaining }).map((_, i) => (
-                                                                <div key={`empty-${i}`} className="flex items-center gap-1.5 px-2 py-1 rounded-full border-2 border-dashed border-orange-300 text-xs text-orange-500">
+                                                                <div key={`empty-${i}`} className="flex items-center gap-1.5 px-2 py-1 rounded-full border-2 border-dashed border-amber-300 text-xs text-amber-500">
                                                                     <UserPlus className="h-3 w-3" />
                                                                     <span>?</span>
                                                                 </div>
@@ -481,7 +481,7 @@ export default function MesTournoisPage() {
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="gap-2 border-orange-300 text-orange-700 hover:bg-orange-100"
+                                                                className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-100"
                                                                 onClick={(e) => {
                                                                     e.preventDefault();
                                                                     e.stopPropagation();
@@ -496,7 +496,7 @@ export default function MesTournoisPage() {
 
                                                         {/* Player search panel */}
                                                         {searchOpen === teamId && (
-                                                            <div className="mt-3 p-3 bg-white rounded-lg border border-orange-200" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="mt-3 p-3 bg-white rounded-lg border border-amber-200" onClick={(e) => e.stopPropagation()}>
                                                                 <div className="flex items-center gap-2 mb-2">
                                                                     <div className="relative flex-1">
                                                                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

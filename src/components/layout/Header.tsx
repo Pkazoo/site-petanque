@@ -28,11 +28,11 @@ import { getMobileUrl } from "@/lib/utils/getMobileUrl";
 
 const roleConfig: Record<string, { label: string; icon: typeof Crown; className: string }> = {
     admin: { label: "Admin", icon: Crown, className: "bg-red-100 text-red-800 border-red-200" },
-    organisateur: { label: "Organisateur", icon: Users, className: "bg-orange-100 text-orange-800 border-orange-200" },
-    organizer: { label: "Organisateur", icon: Users, className: "bg-orange-100 text-orange-800 border-orange-200" },
-    joueur: { label: "Joueur", icon: User, className: "bg-blue-100 text-blue-800 border-blue-200" },
-    player: { label: "Joueur", icon: User, className: "bg-blue-100 text-blue-800 border-blue-200" },
-    user: { label: "Joueur", icon: User, className: "bg-blue-100 text-blue-800 border-blue-200" },
+    organisateur: { label: "Organisateur", icon: Users, className: "bg-accent/10 text-accent border-accent/20" },
+    organizer: { label: "Organisateur", icon: Users, className: "bg-accent/10 text-accent border-accent/20" },
+    joueur: { label: "Joueur", icon: User, className: "bg-sky-100 text-sky-700 border-sky-200" },
+    player: { label: "Joueur", icon: User, className: "bg-sky-100 text-sky-700 border-sky-200" },
+    user: { label: "Joueur", icon: User, className: "bg-sky-100 text-sky-700 border-sky-200" },
 };
 
 const navigation = [
@@ -96,9 +96,6 @@ export function Header() {
                 {/* Logo + QR Code */}
                 <div className="flex items-center gap-3">
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow">
-                            <img src="/logo-fanny.png" alt="Pétanque Manager" className="h-10 w-10 object-cover" />
-                        </div>
                         <span className="hidden sm:block text-xl font-bold text-foreground">
                             Pétanque<span className="text-primary">Manager</span>
                         </span>
@@ -107,10 +104,10 @@ export function Header() {
                     {/* QR Code Button */}
                     <button
                         onClick={() => setShowQrCode(!showQrCode)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                        className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted hover:bg-muted/80 transition-colors"
                         title="QR Code de connexion mobile"
                     >
-                        <QrCode className="h-5 w-5 text-muted-foreground" />
+                        <QrCode className="h-6 w-6 text-muted-foreground" />
                     </button>
                 </div>
 
@@ -174,7 +171,21 @@ export function Header() {
                                 Connexion
                             </Button>
                         </Link>
-                    ) : user ? (
+                    ) : !user ? (
+                        <div className="hidden sm:flex items-center gap-3">
+                            <Link href="/inscription">
+                                <Button size="sm" className="gap-2 rounded-full font-bold">
+                                    Créer un compte
+                                </Button>
+                            </Link>
+                            <Link href="/connexion">
+                                <Button variant="outline" size="sm" className="gap-2">
+                                    <LogIn className="h-4 w-4" />
+                                    Connexion
+                                </Button>
+                            </Link>
+                        </div>
+                    ) : (
                         <div className="hidden sm:flex items-center gap-3">
                             {/* User Dropdown */}
                             <div
@@ -264,13 +275,6 @@ export function Header() {
                                         </div>
                             </div>
                         </div>
-                    ) : (
-                        <Link href="/connexion" className="hidden sm:block">
-                            <Button variant="default" size="sm" className="gap-2">
-                                <LogIn className="h-4 w-4" />
-                                Connexion
-                            </Button>
-                        </Link>
                     )}
 
                     {/* Mobile Logout Button */}
@@ -333,6 +337,20 @@ export function Header() {
 
             <GlobalMessageListener />
         </header>
+
+        {/* Bandeau accroche - visible uniquement quand non connecté */}
+        {!loading && !user && pathname === "/" && (
+            <div className="w-full bg-gradient-to-r from-primary/[0.06] via-primary/[0.03] to-primary/[0.06] border-b border-border/30">
+                <div className="container mx-auto px-4 py-6 text-center">
+                    <h1 className="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight">
+                        Organisez vos concours <span className="text-primary">simplement</span>
+                    </h1>
+                    <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-xl mx-auto">
+                        Tournois locaux, ligues entre amis : gérez tout depuis votre téléphone.
+                    </p>
+                </div>
+            </div>
+        )}
 
         {/* Mobile Menu - fixed overlay outside header for proper scrolling */}
         {mobileMenuOpen && (

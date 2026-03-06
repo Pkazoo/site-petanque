@@ -286,12 +286,12 @@ export function TournamentBracket({ tournamentId, currentUserTeamId }: Tournamen
                                         const team = getTeam(entry.teamId);
                                         const isMyTeam = currentUserTeamId === entry.teamId;
                                         return (
-                                            <div key={entry.teamId} className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${isMyTeam ? "bg-orange-50 border-l-4 border-orange-400 dark:bg-orange-900/20" : "hover:bg-muted/50"}`}>
+                                            <div key={entry.teamId} className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${isMyTeam ? "bg-primary/5 border-l-4 border-primary dark:bg-primary/10" : "hover:bg-muted/50"}`}>
                                                 <div className="w-8 text-center font-bold text-sm">
                                                     {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : entry.rank}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <span className={`text-sm font-medium truncate block ${isMyTeam ? "text-orange-700 dark:text-orange-300 font-bold" : ""}`}>{team?.name || "Équipe inconnue"}</span>
+                                                    <span className={`text-sm font-medium truncate block ${isMyTeam ? "text-primary dark:text-primary font-bold" : ""}`}>{team?.name || "Équipe inconnue"}</span>
                                                 </div>
                                                 <div className="text-xs font-semibold tabular-nums shrink-0 mr-2">
                                                     {entry.score} pts
@@ -323,7 +323,7 @@ export function TournamentBracket({ tournamentId, currentUserTeamId }: Tournamen
                 <BracketDisplay
                     matches={knockoutMatches}
                     title={hasPoolPhase ? "Phase finale" : "Tableau d'élimination"}
-                    colorClass="bg-blue-600"
+                    colorClass="bg-primary"
                     currentUserTeamId={currentUserTeamId}
                 />
             )}

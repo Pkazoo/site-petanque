@@ -22,12 +22,12 @@ const roleLabels: Record<UserRole, string> = {
 };
 
 const roleColors: Record<UserRole, string> = {
-  joueur: 'bg-blue-100 text-blue-800',
-  organisateur: 'bg-orange-100 text-orange-800',
+  joueur: 'bg-sky-100 text-sky-700',
+  organisateur: 'bg-accent/10 text-accent',
   admin: 'bg-red-100 text-red-800',
-  organizer: 'bg-orange-100 text-orange-800',
-  player: 'bg-blue-100 text-blue-800',
-  user: 'bg-blue-100 text-blue-800',
+  organizer: 'bg-accent/10 text-accent',
+  player: 'bg-sky-100 text-sky-700',
+  user: 'bg-sky-100 text-sky-700',
 };
 
 export default function AdminPage() {

@@ -168,7 +168,7 @@ export default function TournamentManagementPage({ params }: { params: Promise<{
                                         const teamAvailablePlayers = getPlayersAvailableForTeam(team.id);
 
                                         return (
-                                        <div key={team.id} className={`p-3 border rounded-lg transition-colors ${isIncomplete ? 'border-orange-300 bg-orange-50/50' : 'border-border bg-card hover:bg-muted/50'}`}>
+                                        <div key={team.id} className={`p-3 border rounded-lg transition-colors ${isIncomplete ? 'border-amber-300 bg-amber-50/50' : 'border-border bg-card hover:bg-muted/50'}`}>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <div className="flex -space-x-2">
@@ -185,8 +185,8 @@ export default function TournamentManagementPage({ params }: { params: Promise<{
                                                         })}
                                                         {/* Empty slots */}
                                                         {Array.from({ length: slotsRemaining }).map((_, i) => (
-                                                            <div key={`empty-${i}`} className="w-8 h-8 rounded-full border-2 border-dashed border-orange-300 bg-orange-50 flex items-center justify-center -ml-2 first:ml-0">
-                                                                <UserPlus className="h-3 w-3 text-orange-400" />
+                                                            <div key={`empty-${i}`} className="w-8 h-8 rounded-full border-2 border-dashed border-amber-300 bg-amber-50 flex items-center justify-center -ml-2 first:ml-0">
+                                                                <UserPlus className="h-3 w-3 text-amber-400" />
                                                             </div>
                                                         ))}
                                                     </div>
@@ -196,14 +196,14 @@ export default function TournamentManagementPage({ params }: { params: Promise<{
                                                                 {team.name || `Équipe ${index + 1}`}
                                                             </h4>
                                                             {isIncomplete && (
-                                                                <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0">
+                                                                <Badge className="bg-amber-500 text-white text-[10px] px-1.5 py-0">
                                                                     À compléter ({team.playerIds.length}/{requiredSize})
                                                                 </Badge>
                                                             )}
                                                         </div>
                                                         <p className="text-sm text-muted-foreground">
                                                             {team.playerIds.map(pid => getPlayer(pid)?.firstName).join(", ")}
-                                                            {isIncomplete && <span className="text-orange-500"> • {slotsRemaining} place{slotsRemaining > 1 ? 's' : ''} restante{slotsRemaining > 1 ? 's' : ''}</span>}
+                                                            {isIncomplete && <span className="text-amber-500"> • {slotsRemaining} place{slotsRemaining > 1 ? 's' : ''} restante{slotsRemaining > 1 ? 's' : ''}</span>}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -212,7 +212,7 @@ export default function TournamentManagementPage({ params }: { params: Promise<{
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                                                            className="text-amber-500 hover:text-amber-600 hover:bg-amber-50"
                                                             onClick={() => {
                                                                 setCompletingTeamId(completingTeamId === team.id ? null : team.id);
                                                                 setTeamSearchQuery('');
@@ -246,7 +246,7 @@ export default function TournamentManagementPage({ params }: { params: Promise<{
 
                                             {/* Player search panel for team completion */}
                                             {completingTeamId === team.id && !isStarted && (
-                                                <div className="mt-3 pt-3 border-t border-orange-200">
+                                                <div className="mt-3 pt-3 border-t border-amber-200">
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <div className="relative flex-1">
                                                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -267,7 +267,7 @@ export default function TournamentManagementPage({ params }: { params: Promise<{
                                                             teamAvailablePlayers.slice(0, 10).map(p => (
                                                                 <button
                                                                     key={p.id}
-                                                                    className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-orange-100/50 text-left transition-colors"
+                                                                    className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-amber-100/50 text-left transition-colors"
                                                                     disabled={addingPlayerToTeam}
                                                                     onClick={async () => {
                                                                         setAddingPlayerToTeam(true);
@@ -289,7 +289,7 @@ export default function TournamentManagementPage({ params }: { params: Promise<{
                                                                         <p className="text-sm font-medium truncate">{p.firstName} {p.lastName}</p>
                                                                         <p className="text-xs text-muted-foreground truncate">{p.location?.city || ''}</p>
                                                                     </div>
-                                                                    <UserPlus className="h-4 w-4 text-orange-500 shrink-0" />
+                                                                    <UserPlus className="h-4 w-4 text-amber-500 shrink-0" />
                                                                 </button>
                                                             ))
                                                         ) : (

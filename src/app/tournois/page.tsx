@@ -263,7 +263,7 @@ export default function TournoisPage() {
                             const showDeleteTournament = canDeleteTournament(tournament.organizerId);
                             return (
                             <Link key={tournament.id} href={`/tournois/${tournament.id}`}>
-                                <Card className={`h-full group hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden ${deletingTournamentId === tournament.id ? 'opacity-50' : ''}`}>
+                                <Card className={`h-full group hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden ${deletingTournamentId === tournament.id ? 'opacity-50' : ''} ${tournament.status === 'completed' ? 'opacity-60 grayscale' : ''}`}>
                                     {tournament.coverImage ? (
                                         <div className="relative h-44 overflow-hidden">
                                             <img

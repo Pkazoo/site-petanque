@@ -186,10 +186,10 @@ function TournamentDetailClient({ id }: { id: string }) {
                 </div>
 
                 {/* Current Match Info - centré */}
-                <Card className="border-orange-200 bg-orange-50/50 max-w-lg mx-auto w-full">
+                <Card className="border-primary/60 bg-primary/5 max-w-lg mx-auto w-full">
                     <CardHeader>
                         <CardTitle className="flex items-center justify-center gap-2">
-                            <Trophy className="h-5 w-5 text-orange-500" />
+                            <Trophy className="h-5 w-5 text-primary" />
                             Votre prochain match
                         </CardTitle>
                     </CardHeader>
@@ -516,11 +516,11 @@ function TournamentDetailClient({ id }: { id: string }) {
 
                     {/* Participants - hidden for official tournaments */}
                     {!tournament.is_official && (
-                    <Card className="border-2 border-blue-200 dark:border-blue-900">
-                        <CardHeader className="bg-blue-50 dark:bg-blue-950/30 border-b">
+                    <Card className="border-2 border-primary/20">
+                        <CardHeader className="bg-primary/5 border-b">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="flex items-center gap-2">
-                                    <Users className="h-5 w-5 text-blue-600" />
+                                    <Users className="h-5 w-5 text-primary" />
                                     Joueurs inscrits ({tournament.participants.length})
                                 </CardTitle>
                                 {canManage && (
@@ -537,17 +537,17 @@ function TournamentDetailClient({ id }: { id: string }) {
                                     const isMe = player.id === currentUserPlayerId;
                                     return (
                                         <Link key={player.id} href={`/profil/${player.id}`}>
-                                            <div className={`flex items-center gap-2 p-2 rounded-lg transition-colors cursor-pointer ${isMe ? "bg-orange-100 border-2 border-orange-400 dark:bg-orange-950/40" : "hover:bg-muted border border-transparent"}`}>
+                                            <div className={`flex items-center gap-2 p-2 rounded-lg transition-colors cursor-pointer ${isMe ? "bg-primary/10 border-2 border-primary dark:bg-primary/20" : "hover:bg-muted border border-transparent"}`}>
                                                 <Avatar
                                                     src={player.avatar}
                                                     fallback={`${player.firstName[0]}${player.lastName[0]}`}
                                                     size="sm"
                                                 />
                                                 <div className="flex-1 min-w-0">
-                                                    <p className={`text-xs font-medium truncate ${isMe ? "text-orange-700 dark:text-orange-300 font-bold" : "text-foreground"}`}>
+                                                    <p className={`text-xs font-medium truncate ${isMe ? "text-primary dark:text-primary font-bold" : "text-foreground"}`}>
                                                         {player.firstName} {player.lastName}
                                                     </p>
-                                                    {isMe && <span className="text-[9px] bg-orange-500 text-white px-1 py-0.5 rounded-full font-semibold">Vous</span>}
+                                                    {isMe && <span className="text-[9px] bg-primary text-primary-foreground px-1 py-0.5 rounded-full font-semibold">Vous</span>}
                                                 </div>
                                             </div>
                                         </Link>

@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 // Comptes de démonstration
 const DEMO_ACCOUNTS = {
     admin: { email: 'admin@petanque.fr', password: 'admin123', label: 'Administrateur', icon: Shield, color: 'bg-red-500 hover:bg-red-600' },
-    organisateur: { email: 'organisateur@petanque.fr', password: 'orga123', label: 'Organisateur', icon: Users, color: 'bg-blue-500 hover:bg-blue-600' },
+    organisateur: { email: 'organisateur@petanque.fr', password: 'orga123', label: 'Organisateur', icon: Users, color: 'bg-accent hover:bg-accent/90' },
     joueur: { email: 'joueur@petanque.fr', password: 'joueur123', label: 'Joueur', icon: User, color: 'bg-green-500 hover:bg-green-600' },
 };
 
@@ -55,17 +55,6 @@ function ConnexionForm() {
     return (
         <div className="min-h-[calc(100vh-12rem)] flex items-center justify-center py-12 px-4">
             <div className="w-full max-w-md">
-                {/* Logo */}
-                <div className="text-center mb-8">
-                    <Link href="/" className="inline-flex items-center gap-2">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl overflow-hidden shadow-lg">
-                            <img src="/logo-fanny.png" alt="Pétanque Manager" className="h-12 w-12 object-cover" />
-                        </div>
-                        <span className="text-2xl font-bold text-foreground">
-                            Petanque<span className="text-primary">Manager</span>
-                        </span>
-                    </Link>
-                </div>
 
                 <Card className="shadow-xl">
                     <CardHeader className="text-center">
